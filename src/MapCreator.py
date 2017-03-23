@@ -5,15 +5,16 @@ from geometry.GeometryFactory import GeometryFactory
 
 class MapCreator:
     id_col_name = "ID"
-    name_col_name = "nom"
+    name_col_name = "NAME"
     max_width = 500
     max_height = 500
     geometry_factory = GeometryFactory()
     output_file = ""
     flip_horizontally = False
 
-    def __init__(self, output_file, max_width = 500, max_height = 500, id_col_name = "ID", flip_horizontally = False) :
+    def __init__(self, output_file, max_width = 500, max_height = 500, id_col_name = "ID", name_col_name = "NAME", flip_horizontally = False) :
         self.id_col_name = id_col_name
+        self.name_col_name = name_col_name        
         self.max_width = max_width
         self.max_height = max_height
         self.output_file = output_file
@@ -63,15 +64,15 @@ class MapCreator:
         size["orig_top"] = min_y
 
         ratio_width_height = size["image_width_orig"] / size["image_height_orig"]
-        if self.max_width / ratio_width_height > self.max_height:
+        if  size["image_height_orig"] > size["image_width_orig"]:
             size["image_width_px"] = round(self.max_height * ratio_width_height)
             size["image_height_px"] = self.max_height
         else:
             size["image_width_px"] = self.max_width
             size["image_height_px"] = round(self.max_width / ratio_width_height)
         
-        size["x_transform_factor"] = self.max_width / size["image_width_orig"]
-        size["y_transform_factor"] = self.max_height / size["image_height_orig"]
+        size["x_transform_factor"] = size["image_width_px"] / size["image_width_orig"]
+        size["y_transform_factor"] = size["image_height_px"] / size["image_height_orig"]
 
         return size
     
@@ -99,8 +100,8 @@ class MapCreator:
 
 
 if __name__ == '__main__':           
-    file_path = "/home/titi/NetBeansProjects/AssistanceMeteoCustomerFront/data/france.geojson"
+    file_path = "/home/titi/NetBeansProjects/AssistanceMeteoCustomerFront/data/europe.geojson"
     output_file = "/var/www/assistance-meteo/html/public/js/jquery.vmap.qgis.js"
+    creator = MapCreator(output_file = output_file, id_col_name="FIPS_CNTRY", name_col_name="CNTRY_NAME", flip_horizontally=True)
     #output_file = "/home/bb/NetBeansProjects/AssistanceMeteoCustomerFront/public/js/jquery.vmap.qgis.js"
-    creator = MapCreator(output_file = output_file, id_col_name="code_insee", flip_horizontally=True)
     creator.execute(file_path)
