@@ -32,11 +32,12 @@ class MultiPolygon:
         path = "M"
         previous_x_in_px = None
         previous_y_in_px = None
-
         for i in range(len(coordinates)):
-            for j in range(len(coordinates[i])):                
-                if j > 0:                    
-                    path = path + " M"
+            if i > 0 and path[-4:] != " Z M":
+                path = path + " Z M"
+            for j in range(len(coordinates[i])):
+                if j > 0 and path[-4:] != " Z M":
+                    path = path + " Z M"
                 for k in range(len(coordinates[i][j])):
                     actual_x = coordinates[i][j][k][0]
                     actual_y = coordinates[i][j][k][1]
@@ -47,7 +48,7 @@ class MultiPolygon:
                         y_in_px = size["image_height_px"] - y_in_px
 
                     if x_in_px != previous_x_in_px or y_in_px != previous_y_in_px :
-                        if k > 0:
+                        if k > 0 and path[-1:] != "M":
                             path = path + " L"
                         path = path + " " + str(x_in_px) + "," + str(y_in_px)
                     previous_x_in_px = x_in_px

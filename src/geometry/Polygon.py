@@ -32,8 +32,10 @@ class Polygon:
         previous_x_in_px = None
         previous_y_in_px = None
         first_point = ""
-
-        for i in range(len(coordinates)):
+        
+        for i in range(len(coordinates)):  
+            if i > 0 and path[-4:] != " Z M":
+                path = path + " Z M"
             for j in range(len(coordinates[i])):
                 actual_x = coordinates[i][j][0]
                 actual_y = coordinates[i][j][1]
@@ -44,7 +46,7 @@ class Polygon:
                     y_in_px = size["image_height_px"] - y_in_px
 
                 if x_in_px != previous_x_in_px and y_in_px != previous_y_in_px :
-                    if path != "M":
+                    if path[-1:] != "M":
                         path = path + " L"
                     path = path + " " + str(x_in_px) + "," + str(y_in_px)
                     previous_x_in_px = x_in_px

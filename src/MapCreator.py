@@ -24,8 +24,7 @@ class MapCreator:
         file_content = f.read()
         f.close()
         geo_json = json.loads(file_content)
-        size = self._calc_size(geo_json)
-        
+        size = self._calc_size(geo_json)        
         canvas = self.convert_to_canvas(geo_json, size)
         self.writeJsonFile(canvas)
     
@@ -99,8 +98,8 @@ class MapCreator:
         f.close()
 
 
-if __name__ == '__main__':
-    file_path = "/home/bb/Téléchargements/france.geojson"
+if __name__ == '__main__':           
+    file_path = "/home/titi/NetBeansProjects/AssistanceMeteoCustomerFront/data/france.geojson"
     output_file = "/var/www/assistance-meteo/html/public/js/jquery.vmap.qgis.js"
     #output_file = "/home/bb/NetBeansProjects/AssistanceMeteoCustomerFront/public/js/jquery.vmap.qgis.js"
     creator = MapCreator(output_file = output_file, id_col_name="code_insee", flip_horizontally=True)
