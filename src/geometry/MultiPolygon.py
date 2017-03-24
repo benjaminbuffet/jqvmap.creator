@@ -47,12 +47,12 @@ class MultiPolygon:
                     if flip_horrizontaly:
                         y_in_px = size["image_height_px"] - y_in_px
 
-                    if x_in_px != previous_x_in_px or y_in_px != previous_y_in_px :
+                    if x_in_px != previous_x_in_px and y_in_px != previous_y_in_px :
                         if k > 0 and path[-1:] != "M":
                             path = path + " L"
                         path = path + " " + str(x_in_px) + "," + str(y_in_px)
-                    previous_x_in_px = x_in_px
-                    previous_y_in_px = y_in_px
+                        previous_x_in_px = x_in_px
+                        previous_y_in_px = y_in_px
         path = path + " z"
 
         return path

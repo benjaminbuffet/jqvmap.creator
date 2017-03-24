@@ -9,25 +9,40 @@ class MapCreator:
     max_width = 500
     max_height = 500
     geometry_factory = GeometryFactory()
-    output_file = ""
     flip_horizontally = False
+    size = None
+    map_name = ""
 
-    def __init__(self, output_file, max_width = 500, max_height = 500, id_col_name = "ID", name_col_name = "NAME", flip_horizontally = False) :
+    def __init__(self, max_width = 500, max_height = 500, id_col_name = "ID", name_col_name = "NAME", flip_horizontally = False, map_name = "") :
         self.id_col_name = id_col_name
         self.name_col_name = name_col_name        
         self.max_width = max_width
         self.max_height = max_height
-        self.output_file = output_file
         self.flip_horizontally = flip_horizontally
+        self.map_name = map_name
 
-    def execute(self, file_path):
-        f = open(file_path, 'r')
+    def init_base_map(self, input_map_file):
+        f = open(input_map_file, 'r')
         file_content = f.read()
         f.close()
         geo_json = json.loads(file_content)
-        size = self._calc_size(geo_json)        
-        canvas = self.convert_to_canvas(geo_json, size)
-        self.writeJsonFile(canvas)
+        self.size = self._calc_size(geo_json)
+
+    def convert_map(self, input_map_file, output_map_file):
+        f = open(input_map_file, 'r')
+        file_content = f.read()
+        f.close()
+        geo_json = json.loads(file_content)       
+        canvas = self.convert_to_canvas(geo_json)
+        self.writeJsonFile(canvas, output_map_file, prefix="jQuery.fn.vectorMap('addMap', '"+ self.map_name +"', ", suffix=");")
+
+    def convert_marker(self, input_marker_file, output_marker_file):
+        f = open(input_marker_file, 'r')
+        file_content = f.read()
+        f.close()
+        geo_json = json.loads(file_content)           
+        basic_json = self.convert_to_basic_json(geo_json)
+        self.writeJsonFile(basic_json, output_marker_file)
     
     def _calc_size(self,geo_json):
         size = {
@@ -76,32 +91,47 @@ class MapCreator:
 
         return size
     
-    def convert_to_canvas(self, geo_json, size):
-        canvas = {"width": size["image_width_px"], "height": size["image_height_px"], "paths":{}}
+    def convert_to_canvas(self, geo_json):
+        canvas = {"width": self.size["image_width_px"], "height": self.size["image_height_px"], "paths":{}}
         for elt in geo_json["features"]:
             id = elt["properties"][self.id_col_name]
             name = elt["properties"][self.name_col_name]
             canvas["paths"][id] = {
-                "path":self.convert_to_canvas_path(elt["geometry"],size),
+                "path":self.convert_to_canvas_path(elt["geometry"]),
                 "name":name}
         return canvas
 
-    def convert_to_canvas_path(self, geometry, size):
+    def convert_to_canvas_path(self, geometry):
         geometry_service = self.geometry_factory.get(geometry["type"])
-        return geometry_service.to_canvas(geometry["coordinates"], size, self.flip_horizontally)
+        return geometry_service.to_canvas(geometry["coordinates"], self.size, self.flip_horizontally)
 
-    def writeJsonFile(self, canvas):
-        jsonContent = "jQuery.fn.vectorMap('addMap', 'test_fr', "
-        jsonContent = jsonContent + json.dumps(canvas) + ");"
+    def convert_to_basic_json(self, geo_json):
+        basic_json = {self.map_name : []}
+        for elt in geo_json["features"]:
+            geometry = elt["geometry"]
+            if geometry["type"] == "Point":                
+                geometry_service = self.geometry_factory.get(geometry["type"])
+                xy = geometry_service.convert_single_coordinates(geometry["coordinates"], self.size, self.flip_horizontally)
+                basic_json[self.map_name].append(elt["properties"])
+                basic_json[self.map_name][-1]["x"] = xy[0]
+                basic_json[self.map_name][-1]["y"] = xy[1]
+        return basic_json
 
-        f = open(self.output_file, 'w')
-        file_content = f.write(jsonContent)
+    def writeJsonFile(self, canvas, output_file, prefix = "", suffix = ""):
+        json_content = prefix + json.dumps(canvas) + suffix
+        f = open(output_file, 'w')
+        f.write(json_content)
         f.close()
 
 
 if __name__ == '__main__':           
-    file_path = "/home/titi/NetBeansProjects/AssistanceMeteoCustomerFront/data/europe.geojson"
-    output_file = "/var/www/assistance-meteo/html/public/js/jquery.vmap.qgis.js"
-    creator = MapCreator(output_file = output_file, id_col_name="FIPS_CNTRY", name_col_name="CNTRY_NAME", flip_horizontally=True)
-    #output_file = "/home/bb/NetBeansProjects/AssistanceMeteoCustomerFront/public/js/jquery.vmap.qgis.js"
-    creator.execute(file_path)
+    input_map_file = "/home/bb/NetBeansProjects/AssistanceMeteoCustomerFront/data/france.geojson"
+    input_marker_file = "/home/bb/NetBeansProjects/AssistanceMeteoCustomerFront/data/france.marker.city.geojson"
+    output_map_file = "/var/www/assistance-meteo/html/public/js/jquery.vmap.qgis.js"
+    output_marker_file = "/var/www/assistance-meteo/html/data/poi/poi-0.json"
+
+    creator = MapCreator(id_col_name="code_insee", name_col_name="nom", flip_horizontally=True, map_name="france_fr")
+    
+    creator.init_base_map(input_map_file)
+    creator.convert_map(input_map_file, output_map_file)
+    creator.convert_marker(input_marker_file, output_marker_file)
